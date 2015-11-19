@@ -1,3 +1,6 @@
+.DS_Store
+connect_four.dSYM
+connect_four.dSYM/
 # Compiled Object files
 *.slo
 *.lo
