@@ -4,20 +4,22 @@ using namespace std;
 #include "mcts.cpp"
 #include "connect_four.h"
 
-typedef int Move;
+typedef vector<int> Move; 
 const char ConnectFourState::player_markers[3] = {'.', 'X', 'O'}; 
 
+// Input - move(vctor<int>): first element is the row index, and the second element is the column index
 void ConnectFourState::do_move(Move move)
 {
-	assert(0 <= move && move < num_cols);
-	assert(board[0][move] == player_markers[0]);
+	assert(0 <= move[0] && move[0] < num_rows);
+	assert(0 <= move[1] && move[1] < num_cols);
+	assert(board[move[0]][move[1]] == player_markers[0]);
 	check_invariant();
 
-	int row = num_rows - 1;
-	while (board[row][move] != player_markers[0]) row--;
-	board[row][move] = player_markers[player_to_move];
-	last_col = move;
-	last_row = row;
+	//int row = num_rows - 1;
+	//while (board[row][move] != player_markers[0]) row--;
+	board[move[0]][move[1]] = player_markers[player_to_move];
+	last_row = move[0];
+	last_col = move[1];
 
 	player_to_move = 3 - player_to_move;
 }
@@ -27,14 +29,20 @@ void ConnectFourState::do_random_move(RandomEngine* engine)
 {
 	assert(has_moves());
 	check_invariant();
-	uniform_int_distribution<Move> moves(0, num_cols - 1);
+	uniform_int_distribution<int> row_random(0, num_rows-1);
+	uniform_int_distribution<int> col_random(0, num_cols-1);
+	Move random_move = {-1, -1};
+	int row_rand, col_rand;
 
 	while (true) {
-		auto move = moves(*engine);
-		if (board[0][move] == player_markers[0]) {
-			do_move(move);
+		row_rand = row_random(*engine);
+		col_rand = col_random(*engine);
+		random_move = {row_rand, col_rand};
+		if (board[row_rand][col_rand] == player_markers[0]) {
+			do_move(random_move);
 			return;
 		}
+		random_move.clear();
 	}
 }
 
@@ -47,9 +55,11 @@ bool ConnectFourState::has_moves() const
 		return false;
 	}
 
-	for (int col = 0; col < num_cols; ++col) {
-		if (board[0][col] == player_markers[0]) {
-			return true;
+	for (int row=0; row < num_rows; ++row){
+		for (int col = 0; col < num_cols; ++col) {
+			if (board[row][col] == player_markers[0]) {
+				return true;
+			}
 		}
 	}
 	return false;
@@ -61,14 +71,16 @@ vector<Move> ConnectFourState::get_moves() const
 
 	vector<Move> moves;
 	if (get_winner() != player_markers[0]) {
-		return moves; // return empty vector, which means there is already a winner
+		return moves; // return empty 2d vector, which means there is already a winner
 	}
 
-	moves.reserve(num_cols);
+	moves.reserve(num_rows*num_cols);
 
-	for (int col = 0; col < num_cols; ++col) {
-		if (board[0][col] == player_markers[0]) {
-			moves.push_back(col);
+	for (int row=0; row < num_rows; ++row){
+		for (int col = 0; col < num_cols; ++col) {
+			if (board[row][col] == player_markers[0]) {
+				moves.push_back({row, col});
+			}
 		}
 	}
 	return moves;
@@ -139,7 +151,7 @@ double ConnectFourState::get_result(int current_player_to_move) const
 		return 0.5;
 	}
 
-	if (winner == player_mar vkers[current_player_to_move]) {
+	if (winner == player_markers[current_player_to_move]) {
 		return 0.0;
 	}
 	else {
@@ -160,7 +172,7 @@ void ConnectFourState::print(ostream& out) const
 		for (int col = 0; col < num_cols - 1; ++col) {
 			out << board[row][col] << ' ';
 		}
-		out << board[row][num_cols - 1] << "|" << endl;
+		out << board[row][num_cols - 1] << "| "  << row << endl;
 	}
 	out << "+";
 	for (int col = 0; col < num_cols - 1; ++col) {
@@ -192,17 +204,22 @@ void main_program()
 	while (state.has_moves()) {
 		cout << endl << "State: " << state << endl;
 
-		ConnectFourState::Move move = ConnectFourState::no_move;
+		ConnectFourState::Move move = {-1, -1};
 		if (state.player_to_move == 1) {
 			move = compute_move(state, player1_options);
 			state.do_move(move);
 		}
 		else {
 			if (human_player) {
+				int row_move, col_move;
 				while (true) {
-					cout << "Input your move: ";
-					move = ConnectFourState::no_move;
-					cin >> move;
+					cout << "Input your move \n";
+					cout << "Row index: ";
+					cin >> row_move;
+					cout << "Column index: ";
+					cin >> col_move;
+					move = {row_move, col_move};
+
 					try {
 						state.do_move(move);
 						break;
@@ -210,6 +227,7 @@ void main_program()
 					catch (std::exception& ) {
 						cout << "Invalid move." << endl;
 					}
+					move.clear();
 				}
 			}
 			else {

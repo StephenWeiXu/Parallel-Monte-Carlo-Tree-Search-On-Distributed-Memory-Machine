@@ -235,7 +235,7 @@ typename State::Move compute_move(const State root_state,
 		}
 
 		if (options.verbose) {
-			cerr << "Move: " << itr.first
+			cerr << "Move: " << (itr.first)[0] << ", " << (itr.first)[1]
 			     << " (" << setw(2) << right << int(100.0 * itr.second / double(games_played) + 0.5) << "% visits)"
 			     << " (" << setw(2) << right << int(100.0 * wins[itr.first] / best_visits  + 0.5)    << "% wins)" << endl;
 		}
@@ -244,7 +244,7 @@ typename State::Move compute_move(const State root_state,
 	if (options.verbose) {
 		double best_wins = wins[best_move];
 		cerr << "----" << endl;
-		cerr << "Best: " << best_move
+		cerr << "Best: " << best_move[0] << ", " << best_move[1]
 		     << " (" << 100.0 * best_visits / double(games_played) << "% visits)"
 		     << " (" << 100.0 * best_wins / best_visits << "% wins)" << endl;
 	}

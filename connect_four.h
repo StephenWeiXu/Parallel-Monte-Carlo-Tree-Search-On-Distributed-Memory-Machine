@@ -7,12 +7,12 @@ using namespace std;
 class ConnectFourState
 {
 public:
-	typedef int Move;
-	static const Move no_move = -1;
+	typedef vector<int> Move;
+	//static const Move no_move(temp, temp+1);
 	int player_to_move;
 	static const char player_markers[3]; 
 
-	ConnectFourState(int num_rows_ = 6, int num_cols_ = 7){
+	ConnectFourState(int num_rows_ = 6, int num_cols_ = 6){
 		player_to_move = 1;
 	    num_rows = num_rows_;
 	    num_cols = num_cols_;

@@ -151,7 +151,7 @@ private:
 // Node class constructors
 template<typename State>
 Node<State>::Node(const State& state) :
-	move(State::no_move),
+	move({-1, -1}),
 	parent(nullptr),
 	player_to_move(state.player_to_move),
 	wins(0),
