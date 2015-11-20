@@ -48,4 +48,3 @@ ostream& operator << (ostream& out, const ConnectFourState& state)
 	return out;
 }
 
-const char ConnectFourState::player_markers[3] = {'.', 'X', 'O'}; 

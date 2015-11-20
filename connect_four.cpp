@@ -5,6 +5,7 @@ using namespace std;
 #include "connect_four.h"
 
 typedef int Move;
+const char ConnectFourState::player_markers[3] = {'.', 'X', 'O'}; 
 
 void ConnectFourState::do_move(Move move)
 {
@@ -60,7 +61,7 @@ vector<Move> ConnectFourState::get_moves() const
 
 	vector<Move> moves;
 	if (get_winner() != player_markers[0]) {
-		return moves;
+		return moves; // return empty vector, which means there is already a winner
 	}
 
 	moves.reserve(num_cols);
@@ -138,7 +139,7 @@ double ConnectFourState::get_result(int current_player_to_move) const
 		return 0.5;
 	}
 
-	if (winner == player_markers[current_player_to_move]) {
+	if (winner == player_mar vkers[current_player_to_move]) {
 		return 0.0;
 	}
 	else {
