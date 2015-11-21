@@ -105,7 +105,7 @@ string Node<State>::indent_string(int indent) const
 /************************************************************************/
 
 template<typename State>
-unique_ptr<Node<State>>  compute_tree(const State root_state,
+unique_ptr<Node<State>> compute_tree(const State root_state,
                                            const ComputeOptions options,
                                            mt19937_64::result_type initial_seed)
 {
