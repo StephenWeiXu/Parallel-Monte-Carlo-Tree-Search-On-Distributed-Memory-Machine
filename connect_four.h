@@ -29,12 +29,13 @@ public:
 	char get_winner() const;
 	double get_result(int current_player_to_move) const;
 	void print(ostream& out) const;
-
+	bool check_invalid_move(int row, int col);
+	
 private:
-	void check_invariant() const
-	{
+	void check_invariant() const{
 		assert(player_to_move == 1 || player_to_move == 2);
 	}
+
 
 	int num_rows, num_cols;
 	vector<vector<char>> board;

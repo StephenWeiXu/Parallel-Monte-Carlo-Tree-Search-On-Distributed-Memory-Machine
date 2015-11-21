@@ -112,30 +112,32 @@ unique_ptr<Node<State>>  compute_tree(const State root_state,
 	mt19937_64 random_engine(initial_seed);
 
 	assert(options.max_iterations >= 0 || options.max_time >= 0);
-	if (options.max_time >= 0) {
-		#ifndef USE_OPENMP
-		throw runtime_error("ComputeOptions::max_time requires OpenMP.");
-		#endif
-	}
+	// if (options.max_time >= 0) {
+	// 	#ifndef USE_OPENMP
+	// 	throw runtime_error("ComputeOptions::max_time requires OpenMP.");
+	// 	#endif
+	// }
 	// Will support more players later.
 	assert(root_state.player_to_move == 1 || root_state.player_to_move == 2);
 	auto root = unique_ptr<Node<State>>(new Node<State>(root_state));
 
-	#ifdef USE_OPENMP
-	double start_time = ::omp_get_wtime();
-	double print_time = start_time;
-	#endif
+	// #ifdef USE_OPENMP
+	// double start_time = ::omp_get_wtime();
+	// double print_time = start_time;
+	// #endif
 
 	for (int iter = 1; iter <= options.max_iterations || options.max_iterations < 0; ++iter) {
 		auto node = root.get();
 		State state = root_state;
 
+		/* Select */
 		// Select a path through the tree to a leaf node.
 		while (!node->has_untried_moves() && node->has_children()) {
 			node = node->select_child_UCT();
 			state.do_move(node->move);
 		}
 
+		/* Expand */
 		// If we are not already at the final state, expand the
 		// tree with a new node and move there.
 		if (node->has_untried_moves()) {
@@ -144,11 +146,13 @@ unique_ptr<Node<State>>  compute_tree(const State root_state,
 			node = node->add_child(move, state);
 		}
 
+		/* Playout */
 		// We now play randomly until the game ends.
 		while (state.has_moves()) {
 			state.do_random_move(&random_engine);
 		}
 
+		/* Backpropagate */
 		// We have now reached a final state. Backpropagate the result
 		// up the tree to the root node.
 		while (node != nullptr) {
@@ -156,19 +160,19 @@ unique_ptr<Node<State>>  compute_tree(const State root_state,
 			node = node->parent;
 		}
 
-		#ifdef USE_OPENMP
-		if (options.verbose || options.max_time >= 0) {
-			double time = ::omp_get_wtime();
-			if (options.verbose && (time - print_time >= 1.0 || iter == options.max_iterations)) {
-				cerr << iter << " games played (" << double(iter) / (time - start_time) << " / second)." << endl;
-				print_time = time;
-			}
+		// #ifdef USE_OPENMP
+		// if (options.verbose || options.max_time >= 0) {
+		// 	double time = ::omp_get_wtime();
+		// 	if (options.verbose && (time - print_time >= 1.0 || iter == options.max_iterations)) {
+		// 		cerr << iter << " games played (" << double(iter) / (time - start_time) << " / second)." << endl;
+		// 		print_time = time;
+		// 	}
 
-			if (time - start_time >= options.max_time) {
-				break;
-			}
-		}
-		#endif
+		// 	if (time - start_time >= options.max_time) {
+		// 		break;
+		// 	}
+		// }
+		// #endif
 	}
 
 	return root;
@@ -189,9 +193,9 @@ typename State::Move compute_move(const State root_state,
 		return moves[0];
 	}
 
-	#ifdef USE_OPENMP
-	double start_time = ::omp_get_wtime();
-	#endif
+	// #ifdef USE_OPENMP
+	// double start_time = ::omp_get_wtime();
+	// #endif
 
 	// Start all jobs to compute trees.
 	vector<future<unique_ptr<Node<State>>>> root_futures;

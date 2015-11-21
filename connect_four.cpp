@@ -183,7 +183,15 @@ void ConnectFourState::print(ostream& out) const
 	out << player_markers[player_to_move] << " to move " << endl << endl;
 }
 
-
+bool ConnectFourState::check_invalid_move(int row, int col){
+	if (board[row][col] == player_markers[0] 
+		&& 0<=row && row<=num_rows 
+		&& 0<=col && col<=num_cols){
+		return true;
+	}else{
+		return false;
+	}
+}
 
 void main_program()
 {
@@ -220,13 +228,11 @@ void main_program()
 					cin >> col_move;
 					move = {row_move, col_move};
 
-					try {
-						state.do_move(move);
-						break;
+					if (!state.check_invalid_move(row_move, col_move)){
+						cout << "\nError: invalid move! Please give the location in the range of index" << endl;
+						exit(1);
 					}
-					catch (std::exception& ) {
-						cout << "Invalid move." << endl;
-					}
+					state.do_move(move);
 					move.clear();
 				}
 			}
