@@ -1,4 +1,5 @@
 #include <iostream>
+#include <ctime>
 using namespace std;
 
 #include "mcts.cpp"
@@ -184,15 +185,10 @@ void ConnectFourState::print(ostream& out) const
 
 
 
-
-
-
-
 void main_program()
 {
-	using namespace std;
-
 	bool human_player = true;
+	time_t start, end;
 
 	ComputeOptions player1_options, player2_options;
 	player1_options.max_iterations = 100000;
@@ -206,17 +202,21 @@ void main_program()
 
 		ConnectFourState::Move move = {-1, -1};
 		if (state.player_to_move == 1) {
+			time(&start);
 			move = compute_move(state, player1_options);
 			state.do_move(move);
+			time(&end);
+			cout << "***************************" << endl;
+			cout << "Computer move spends time: " << (end-start) << " seconds" << endl;
 		}
 		else {
 			if (human_player) {
 				int row_move, col_move;
 				while (true) {
 					cout << "Input your move \n";
-					cout << "Row index: ";
+					cout << "Row index(0-5): ";
 					cin >> row_move;
-					cout << "Column index: ";
+					cout << "Column index(0-5): ";
 					cin >> col_move;
 					move = {row_move, col_move};
 
@@ -246,7 +246,7 @@ void main_program()
 		cout << "Player 2 wins!" << endl;
 	}
 	else {
-		cout << "Nobody wins!" << endl;
+		cout << "We tie!" << endl;
 	}
 }
 
