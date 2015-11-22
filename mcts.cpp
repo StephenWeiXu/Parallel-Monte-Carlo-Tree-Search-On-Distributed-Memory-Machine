@@ -213,7 +213,7 @@ typename State::Move compute_move(const State root_state,
 	// Collect the results.
 	vector<unique_ptr<Node<State>>> roots;
 	for (int t = 0; t < options.number_of_threads; ++t) {
-		roots.push_back(move(root_futures[t].get()));
+		roots.push_back(move(root_futures[t].get())); // move() function on unique_ptr
 	}
 
 	// Merge the children of all root nodes.

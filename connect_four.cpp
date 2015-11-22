@@ -220,7 +220,7 @@ void main_program()
 		else {
 			if (human_player) {
 				int row_move, col_move;
-				while (true) {
+				//while (true) {
 					cout << "Input your move \n";
 					cout << "Row index(0-5): ";
 					cin >> row_move;
@@ -234,7 +234,7 @@ void main_program()
 					}
 					state.do_move(move);
 					move.clear();
-				}
+				//}
 			}
 			else {
 				move = compute_move(state, player2_options);
