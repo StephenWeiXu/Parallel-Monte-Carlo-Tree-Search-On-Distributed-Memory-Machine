@@ -4,7 +4,7 @@ using namespace std;
 
 #include "mcts.h"
 
-class ConnectFourState
+class GomokuState
 {
 public:
 	typedef vector<int> Move;
@@ -12,7 +12,7 @@ public:
 	int player_to_move;
 	static const char player_markers[3]; 
 
-	ConnectFourState(int num_rows_ = 9, int num_cols_ = 9){
+	GomokuState(int num_rows_ = 9, int num_cols_ = 9){
 		player_to_move = 1;
 	    num_rows = num_rows_;
 	    num_cols = num_cols_;
@@ -43,7 +43,7 @@ private:
 	int last_row;
 };
 
-ostream& operator << (ostream& out, const ConnectFourState& state)
+ostream& operator << (ostream& out, const GomokuState& state)
 {
 	state.print(out);
 	return out;

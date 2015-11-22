@@ -126,8 +126,9 @@ unique_ptr<Node<State>> compute_tree(const State root_state,
 	// double print_time = start_time;
 	// #endif
 
+	// Each iteration will again begin at the root node, which is inefficient!
 	for (int iter = 1; iter <= options.max_iterations || options.max_iterations < 0; ++iter) {
-		auto node = root.get();
+		auto node = root.get(); // node->children.size() will increase by 1 for each iteration. the max size will be determined by state.has_moves()
 		State state = root_state;
 
 		/* Select */
@@ -143,7 +144,7 @@ unique_ptr<Node<State>> compute_tree(const State root_state,
 		if (node->has_untried_moves()) {
 			auto move = node->get_untried_move(&random_engine);
 			state.do_move(move);
-			node = node->add_child(move, state);
+			node = node->add_child(move, state); // The returnt node is the added child node, not the parent node, its children will be 0
 		}
 
 		/* Playout */
@@ -175,7 +176,7 @@ unique_ptr<Node<State>> compute_tree(const State root_state,
 		// #endif
 	}
 
-	return root;
+	return root; // root->children.size() will be the number of moves, num_rows*num_cols is the first iteration
 }
 
 template<typename State>
@@ -198,22 +199,22 @@ typename State::Move compute_move(const State root_state,
 	// #endif
 
 	/* Start all jobs to compute trees. */
-	future<unique_ptr<Node<State>>> root_futures;
+	//future<unique_ptr<Node<State>>> root_futures;
 	ComputeOptions job_options = options;
 	job_options.verbose = false;
 	//for (int t = 0; t < options.number_of_threads; ++t) {
-	auto func = [&root_state, &job_options] () -> unique_ptr<Node<State>>
-	{
-		return compute_tree(root_state, job_options, 1012411 * 0 + 12515);
-	};
+	// auto func = [&root_state, &job_options] () -> unique_ptr<Node<State>>
+	// {
+	// 	return compute_tree(root_state, job_options, 1012411 * 0 + 12515);
+	// };
 
-	root_futures = async(launch::async, func);
+	// root_futures = async(launch::async, func);
 	//}
 
 	/* Collect the results. */
-	unique_ptr<Node<State>> roots;
+	unique_ptr<Node<State>> root = compute_tree(root_state, job_options, 1012411 * 0 + 12515);
 	//for (int t = 0; t < options.number_of_threads; ++t) {
-	roots = move(root_futures.get()); // move() function on unique_ptr
+	//roots = move(root_futures.get()); // move() function on unique_ptr
 	//}
 
 	/* Merge the children of all root nodes. */
@@ -221,7 +222,7 @@ typename State::Move compute_move(const State root_state,
 	map<typename State::Move, double> wins;
 	long long games_played = 0;
 	//for (int t = 0; t < options.number_of_threads; ++t) {
-	auto root = roots.get();
+	//auto root = roots.get();
 	games_played += root->visits;
 	for (auto child = root->children.cbegin(); child != root->children.cend(); ++child) {
 		visits[(*child)->move] += (*child)->visits;

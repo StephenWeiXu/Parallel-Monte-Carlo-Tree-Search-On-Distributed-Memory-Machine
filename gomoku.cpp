@@ -3,13 +3,13 @@
 using namespace std;
 
 #include "mcts.cpp"
-#include "connect_four.h"
+#include "gomoku.h"
 
 typedef vector<int> Move; 
-const char ConnectFourState::player_markers[3] = {'.', 'X', 'O'}; 
+const char GomokuState::player_markers[3] = {'.', 'X', 'O'}; 
 
 // Input - move(vctor<int>): first element is the row index, and the second element is the column index
-void ConnectFourState::do_move(Move move)
+void GomokuState::do_move(Move move)
 {
 	assert(0 <= move[0] && move[0] < num_rows);
 	assert(0 <= move[1] && move[1] < num_cols);
@@ -26,7 +26,7 @@ void ConnectFourState::do_move(Move move)
 }
 
 template<typename RandomEngine>
-void ConnectFourState::do_random_move(RandomEngine* engine)
+void GomokuState::do_random_move(RandomEngine* engine)
 {
 	assert(has_moves());
 	check_invariant();
@@ -47,7 +47,7 @@ void ConnectFourState::do_random_move(RandomEngine* engine)
 	}
 }
 
-bool ConnectFourState::has_moves() const
+bool GomokuState::has_moves() const
 {
 	check_invariant();
 
@@ -66,7 +66,7 @@ bool ConnectFourState::has_moves() const
 	return false;
 }
 
-vector<Move> ConnectFourState::get_moves() const
+vector<Move> GomokuState::get_moves() const
 {
 	check_invariant();
 
@@ -87,7 +87,7 @@ vector<Move> ConnectFourState::get_moves() const
 	return moves;
 }
 
-char ConnectFourState::get_winner() const
+char GomokuState::get_winner() const
 {
 	if (last_col < 0) {
 		return player_markers[0];
@@ -142,7 +142,7 @@ char ConnectFourState::get_winner() const
 	return player_markers[0];
 }
 
-double ConnectFourState::get_result(int current_player_to_move) const
+double GomokuState::get_result(int current_player_to_move) const
 {
 	assert( ! has_moves());
 	check_invariant();
@@ -160,7 +160,7 @@ double ConnectFourState::get_result(int current_player_to_move) const
 	}
 }
 
-void ConnectFourState::print(ostream& out) const
+void GomokuState::print(ostream& out) const
 {
 	out << endl;
 	out << " ";
@@ -183,7 +183,7 @@ void ConnectFourState::print(ostream& out) const
 	out << player_markers[player_to_move] << " to move " << endl << endl;
 }
 
-bool ConnectFourState::check_invalid_move(int row, int col){
+bool GomokuState::check_invalid_move(int row, int col){
 	if (board[row][col] == player_markers[0] 
 		&& 0<=row && row<=num_rows 
 		&& 0<=col && col<=num_cols){
@@ -204,11 +204,11 @@ void main_program()
 	player2_options.max_iterations =  10000;
 	player2_options.verbose = true;
 
-	ConnectFourState state;
+	GomokuState state;
 	while (state.has_moves()) {
 		cout << endl << "State: " << state << endl;
 
-		ConnectFourState::Move move = {-1, -1};
+		GomokuState::Move move = {-1, -1};
 		if (state.player_to_move == 1) {
 			time(&start);
 			move = compute_move(state, player1_options);
