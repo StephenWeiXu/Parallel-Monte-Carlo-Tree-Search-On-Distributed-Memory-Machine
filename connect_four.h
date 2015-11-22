@@ -12,7 +12,7 @@ public:
 	int player_to_move;
 	static const char player_markers[3]; 
 
-	ConnectFourState(int num_rows_ = 6, int num_cols_ = 6){
+	ConnectFourState(int num_rows_ = 9, int num_cols_ = 9){
 		player_to_move = 1;
 	    num_rows = num_rows_;
 	    num_cols = num_cols_;
@@ -30,7 +30,7 @@ public:
 	double get_result(int current_player_to_move) const;
 	void print(ostream& out) const;
 	bool check_invalid_move(int row, int col);
-	
+
 private:
 	void check_invariant() const{
 		assert(player_to_move == 1 || player_to_move == 2);

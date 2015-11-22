@@ -100,7 +100,7 @@ char ConnectFourState::get_winner() const
 	int left = 0, right = 0;
 	for (int col = last_col - 1; col >= 0 && board[last_row][col] == piece; --col) left++;
 	for (int col = last_col + 1; col < num_cols && board[last_row][col] == piece; ++col) right++;
-	if (left + 1 + right >= 4) {
+	if (left + 1 + right >= 5) {
 		return piece;
 	}
 
@@ -111,7 +111,7 @@ char ConnectFourState::get_winner() const
 	int up = 0, down = 0;
 	for (int row = last_row - 1; row >= 0 && board[row][last_col] == piece; --row) up++;
 	for (int row = last_row + 1; row < num_rows && board[row][last_col] == piece; ++row) down++;
-	if (up + 1 + down >= 4) {
+	if (up + 1 + down >= 5) {
 		return piece;
 	}
 
@@ -123,7 +123,7 @@ char ConnectFourState::get_winner() const
 	down = 0;
 	for (int row = last_row - 1, col = last_col - 1; row >= 0 && col >= 0 && board[row][col] == piece; --row, --col) up++;
 	for (int row = last_row + 1, col = last_col + 1; row < num_rows && col < num_cols && board[row][col] == piece; ++row, ++col) down++;
-	if (up + 1 + down >= 4) {
+	if (up + 1 + down >= 5) {
 		return piece;
 	}
 
@@ -135,7 +135,7 @@ char ConnectFourState::get_winner() const
 	down = 0;
 	for (int row = last_row + 1, col = last_col - 1; row < num_rows && col >= 0 && board[row][col] == piece; ++row, --col) up++;
 	for (int row = last_row - 1, col = last_col + 1; row >= 0 && col < num_cols && board[row][col] == piece; --row, ++col) down++;
-	if (up + 1 + down >= 4) {
+	if (up + 1 + down >= 5) {
 		return piece;
 	}
 

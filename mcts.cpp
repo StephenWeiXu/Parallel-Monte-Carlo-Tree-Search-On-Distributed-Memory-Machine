@@ -184,7 +184,7 @@ typename State::Move compute_move(const State root_state,
 {
 	using namespace std;
 
-	// Will support more players later.
+	/* Will support more players later. */
 	assert(root_state.player_to_move == 1 || root_state.player_to_move == 2);
 
 	auto moves = root_state.get_moves();
@@ -197,39 +197,39 @@ typename State::Move compute_move(const State root_state,
 	// double start_time = ::omp_get_wtime();
 	// #endif
 
-	// Start all jobs to compute trees.
-	vector<future<unique_ptr<Node<State>>>> root_futures;
+	/* Start all jobs to compute trees. */
+	future<unique_ptr<Node<State>>> root_futures;
 	ComputeOptions job_options = options;
 	job_options.verbose = false;
-	for (int t = 0; t < options.number_of_threads; ++t) {
-		auto func = [t, &root_state, &job_options] () -> unique_ptr<Node<State>>
-		{
-			return compute_tree(root_state, job_options, 1012411 * t + 12515);
-		};
+	//for (int t = 0; t < options.number_of_threads; ++t) {
+	auto func = [&root_state, &job_options] () -> unique_ptr<Node<State>>
+	{
+		return compute_tree(root_state, job_options, 1012411 * 0 + 12515);
+	};
 
-		root_futures.push_back(async(launch::async, func));
-	}
+	root_futures = async(launch::async, func);
+	//}
 
-	// Collect the results.
-	vector<unique_ptr<Node<State>>> roots;
-	for (int t = 0; t < options.number_of_threads; ++t) {
-		roots.push_back(move(root_futures[t].get())); // move() function on unique_ptr
-	}
+	/* Collect the results. */
+	unique_ptr<Node<State>> roots;
+	//for (int t = 0; t < options.number_of_threads; ++t) {
+	roots = move(root_futures.get()); // move() function on unique_ptr
+	//}
 
-	// Merge the children of all root nodes.
+	/* Merge the children of all root nodes. */
 	map<typename State::Move, int> visits;
 	map<typename State::Move, double> wins;
 	long long games_played = 0;
-	for (int t = 0; t < options.number_of_threads; ++t) {
-		auto root = roots[t].get();
-		games_played += root->visits;
-		for (auto child = root->children.cbegin(); child != root->children.cend(); ++child) {
-			visits[(*child)->move] += (*child)->visits;
-			wins[(*child)->move]   += (*child)->wins;
-		}
+	//for (int t = 0; t < options.number_of_threads; ++t) {
+	auto root = roots.get();
+	games_played += root->visits;
+	for (auto child = root->children.cbegin(); child != root->children.cend(); ++child) {
+		visits[(*child)->move] += (*child)->visits;
+		wins[(*child)->move]   += (*child)->wins;
 	}
+	//}
 
-	// Find the node with the most visits.
+	/* Find the node with the most visits. */
 	int best_visits = -1;
 	typename State::Move best_move = typename State::Move();
 	for (auto itr: visits) {
