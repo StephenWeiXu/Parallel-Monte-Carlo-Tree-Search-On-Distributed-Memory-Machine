@@ -29,7 +29,7 @@ public:
 	char get_winner() const;
 	double get_result(int current_player_to_move) const;
 	void print(ostream& out) const;
-	bool check_invalid_move(int row, int col);
+	bool check_invalid_move(int row, int col, string& error_msg);
 
 private:
 	void check_invariant() const{

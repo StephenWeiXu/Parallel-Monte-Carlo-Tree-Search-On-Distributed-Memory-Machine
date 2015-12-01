@@ -133,6 +133,7 @@ unique_ptr<Node<State>> compute_tree(const State root_state,
 
 		/* Select */
 		// Select a path through the tree to a leaf node.
+		// While loop will not be entered until this node has added all its untried moves (added all its possible children)
 		while (!node->has_untried_moves() && node->has_children()) {
 			node = node->select_child_UCT();
 			state.do_move(node->move);

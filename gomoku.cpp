@@ -8,6 +8,9 @@ using namespace std;
 typedef vector<int> Move; 
 const char GomokuState::player_markers[3] = {'.', 'X', 'O'}; 
 
+const string POSITION_ALREADY_USED = "Invalid Move: position is already used!";
+const string INVALID_INDEX = "Invalid Move: the index is out of range!";
+
 // Input - move(vctor<int>): first element is the row index, and the second element is the column index
 void GomokuState::do_move(Move move)
 {
@@ -183,14 +186,16 @@ void GomokuState::print(ostream& out) const
 	out << player_markers[player_to_move] << " to move " << endl << endl;
 }
 
-bool GomokuState::check_invalid_move(int row, int col){
-	if (board[row][col] == player_markers[0] 
-		&& 0<=row && row<=num_rows 
-		&& 0<=col && col<=num_cols){
-		return true;
-	}else{
+bool GomokuState::check_invalid_move(int row, int col, string& error_msg){
+	if(row < 0 || row > num_rows || col < 0 || col > num_cols){
+		error_msg = INVALID_INDEX;
 		return false;
 	}
+	if (board[row][col] != player_markers[0]){
+		error_msg = POSITION_ALREADY_USED;
+		return false;
+	}
+	return true;
 }
 
 void main_program()
@@ -210,6 +215,7 @@ void main_program()
 
 		GomokuState::Move move = {-1, -1};
 		if (state.player_to_move == 1) {
+			cout << "Computer is caculating its move..." << endl;
 			time(&start);
 			move = compute_move(state, player1_options);
 			state.do_move(move);
@@ -220,21 +226,23 @@ void main_program()
 		else {
 			if (human_player) {
 				int row_move, col_move;
-				//while (true) {
-					cout << "Input your move \n";
-					cout << "Row index(0-5): ";
+				while (true) {
+					cout << "Input your move: \n";
+					cout << "  Row index(0-5): ";
 					cin >> row_move;
-					cout << "Column index(0-5): ";
+					cout << "  Column index(0-5): ";
 					cin >> col_move;
 					move = {row_move, col_move};
 
-					if (!state.check_invalid_move(row_move, col_move)){
-						cout << "\nError: invalid move! Please give the location in the range of index" << endl;
-						exit(1);
+					string invalid_move_msg;
+					if (!state.check_invalid_move(row_move, col_move, invalid_move_msg)){
+						cout << invalid_move_msg << endl << endl;
+						continue;
 					}
-					state.do_move(move);
-					move.clear();
-				//}
+					break;
+				}
+				state.do_move(move);
+				move.clear();
 			}
 			else {
 				move = compute_move(state, player2_options);
