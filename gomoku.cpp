@@ -5,6 +5,8 @@ using namespace std;
 #include "mcts.cpp"
 #include "gomoku.h"
 
+
+/***************************************************************************************/
 typedef vector<int> Move; 
 const char GomokuState::player_markers[3] = {'.', 'X', 'O'}; 
 
@@ -198,7 +200,7 @@ bool GomokuState::check_invalid_move(int row, int col, string& error_msg){
 	return true;
 }
 
-void main_program()
+int main()
 {
 	bool human_player = true;
 	time_t start, end;
@@ -210,6 +212,7 @@ void main_program()
 	player2_options.verbose = true;
 
 	GomokuState state;
+	ComputeOptions mcts_computation;
 	while (state.has_moves()) {
 		cout << endl << "State: " << state << endl;
 
@@ -217,7 +220,7 @@ void main_program()
 		if (state.player_to_move == 1) {
 			cout << "Computer is caculating its move..." << endl;
 			time(&start);
-			move = compute_move(state, player1_options);
+			move = mcts_computation.compute_move(state, player1_options);
 			state.do_move(move);
 			time(&end);
 			cout << "***************************" << endl;
@@ -245,7 +248,7 @@ void main_program()
 				move.clear();
 			}
 			else {
-				move = compute_move(state, player2_options);
+				move = mcts_computation.compute_move(state, player2_options);
 				state.do_move(move);
 			}
 		}
@@ -262,15 +265,6 @@ void main_program()
 	else {
 		cout << "We tie!" << endl;
 	}
-}
 
-int main()
-{
-	try {
-		main_program();
-	}
-	catch (std::runtime_error& error) {
-		std::cerr << "ERROR: " << error.what() << std::endl;
-		return 1;
-	}
+	return 0;
 }

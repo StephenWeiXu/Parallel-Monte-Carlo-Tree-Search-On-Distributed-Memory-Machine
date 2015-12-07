@@ -3,16 +3,17 @@ using namespace std;
 
 #include "mcts.h"
 
+
 /************************************************************************/
 template<typename State>
-bool Node<State>::has_untried_moves() const
+bool Node<State>::has_untried_moves()
 {
 	return ! moves.empty();
 }
 
 template<typename State>
 template<typename RandomEngine>
-typename State::Move Node<State>::get_untried_move(RandomEngine* engine) const
+typename State::Move Node<State>::get_untried_move(RandomEngine* engine)
 {
 	assert( ! moves.empty());
 	uniform_int_distribution<size_t> moves_distribution(0, moves.size() - 1);
@@ -20,7 +21,7 @@ typename State::Move Node<State>::get_untried_move(RandomEngine* engine) const
 }
 
 template<typename State>
-Node<State>* Node<State>::best_child() const
+Node<State>* Node<State>::best_child()
 {
 	assert(moves.empty());
 	assert( ! children.empty() );
@@ -30,7 +31,7 @@ Node<State>* Node<State>::best_child() const
 }
 
 template<typename State>
-Node<State>* Node<State>::select_child_UCT() const
+Node<State>* Node<State>::select_child_UCT(df_stack_UCT_info *stack_UCT_info)
 {
 	assert( ! children.empty() );
 	for (auto child: children) {
@@ -38,8 +39,18 @@ Node<State>* Node<State>::select_child_UCT() const
 			sqrt(2.0 * log(double(this->visits + 1)) / child->visits);
 	}
 
-	return *max_element(children.begin(), children.end(),
-		[](Node* a, Node* b) { return a->UCT_score < b->UCT_score; });
+	sort(children.begin(), children.end(), [](Node* a, Node* b) { return a->UCT_score < b->UCT_score; });
+	
+	/* initialize the stack_UCT_info */
+	stack_UCT_info->best_move_visits = children[0]->visits;
+	stack_UCT_info->best_move_wins = children[0]->wins;
+	stack_UCT_info->second_best_move_visits = children[1]->visits;
+	stack_UCT_info->second_best_move_wins = children[1]->wins;
+	stack_UCT_info->parent_visits = visits;
+
+	return children[0]; 
+	// return *max_element(children.begin(), children.end(),
+	// 	[](Node* a, Node* b) { return a->UCT_score < b->UCT_score; });
 }
 
 template<typename State>
@@ -57,7 +68,7 @@ Node<State>* Node<State>::add_child(const Move& move, const State& state)
 }
 
 template<typename State>
-void Node<State>::update(double result)
+void Node<State>::update(double result, stack<df_stack_UCT_info*>& df_UCT_stack)
 {
 	visits++;
 
@@ -67,7 +78,7 @@ void Node<State>::update(double result)
 }
 
 template<typename State>
-string Node<State>::to_string() const
+string Node<State>::to_string()
 {
 	stringstream sout;
 	sout << "["
@@ -79,7 +90,7 @@ string Node<State>::to_string() const
 }
 
 template<typename State>
-string Node<State>::tree_to_string(int max_depth, int indent) const
+string Node<State>::tree_to_string(int max_depth, int indent)
 {
 	if (indent >= max_depth) {
 		return "";
@@ -93,7 +104,7 @@ string Node<State>::tree_to_string(int max_depth, int indent) const
 }
 
 template<typename State>
-string Node<State>::indent_string(int indent) const
+string Node<State>::indent_string(int indent)
 {
 	string s = "";
 	for (int i = 1; i <= indent; ++i) {
@@ -103,9 +114,13 @@ string Node<State>::indent_string(int indent) const
 }
 
 /************************************************************************/
+void ComputeOptions::check_local_UCT_stack(stack<df_stack_UCT_info*>&){
+
+}
+
 
 template<typename State>
-unique_ptr<Node<State>> compute_tree(const State root_state,
+unique_ptr<Node<State>> ComputeOptions::compute_tree(const State root_state,
                                            const ComputeOptions options,
                                            mt19937_64::result_type initial_seed)
 {
@@ -125,6 +140,8 @@ unique_ptr<Node<State>> compute_tree(const State root_state,
 	// double start_time = ::omp_get_wtime();
 	// double print_time = start_time;
 	// #endif
+	
+	stack<df_stack_UCT_info*> df_UCT_stack;
 
 	// Each iteration will again begin at the root node, which is inefficient!
 	for (int iter = 1; iter <= options.max_iterations || options.max_iterations < 0; ++iter) {
@@ -135,7 +152,9 @@ unique_ptr<Node<State>> compute_tree(const State root_state,
 		// Select a path through the tree to a leaf node.
 		// While loop will not be entered until this node has added all its untried moves (added all its possible children)
 		while (!node->has_untried_moves() && node->has_children()) {
-			node = node->select_child_UCT();
+			df_stack_UCT_info *stack_UCT_info = new df_stack_UCT_info(); 
+			node = node->select_child_UCT(stack_UCT_info);
+			df_UCT_stack.push(stack_UCT_info);
 			state.do_move(node->move);
 		}
 
@@ -158,9 +177,13 @@ unique_ptr<Node<State>> compute_tree(const State root_state,
 		// We have now reached a final state. Backpropagate the result
 		// up the tree to the root node.
 		while (node != nullptr) {
-			node->update(state.get_result(node->player_to_move));
+			node->update(state.get_result(node->player_to_move), df_UCT_stack);
+			/* Check whether the situation is still satisfied or not */
 			node = node->parent;
 		}
+
+		/* When update, also update the best move visits&wins in the stack_UCT_info */
+
 
 		// #ifdef USE_OPENMP
 		// if (options.verbose || options.max_time >= 0) {
@@ -181,11 +204,9 @@ unique_ptr<Node<State>> compute_tree(const State root_state,
 }
 
 template<typename State>
-typename State::Move compute_move(const State root_state,
+typename State::Move ComputeOptions::compute_move(const State root_state,
                                   const ComputeOptions options)
 {
-	using namespace std;
-
 	/* Will support more players later. */
 	assert(root_state.player_to_move == 1 || root_state.player_to_move == 2);
 

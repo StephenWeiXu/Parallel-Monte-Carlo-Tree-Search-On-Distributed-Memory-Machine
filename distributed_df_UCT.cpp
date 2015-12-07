@@ -2,7 +2,7 @@
 #include <mpi.h>
 using namespace std;
 
-#include "connect_four.cpp"
+#include "gomoku.h"
 
 int main(int argc, char** argv){
 	int rank, size;

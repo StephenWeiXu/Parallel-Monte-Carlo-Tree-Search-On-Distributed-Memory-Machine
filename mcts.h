@@ -15,6 +15,7 @@
 #include <thread>
 #include <vector>
 #include <cassert>
+#include <stack>
 
 using namespace std;
 
@@ -62,26 +63,6 @@ private:
 //
 /************************************************************************/
 
-struct ComputeOptions
-{
-	//int number_of_threads;
-	int max_iterations;
-	double max_time;
-	bool verbose;
-
-	ComputeOptions(){
-		//number_of_threads = 8;
-		max_iterations = 10000;
-		max_time = -1.0; // default is no time limit.
-		verbose = false;
-	}
-};
-
-template<typename State>
-typename State::Move compute_move(const State root_state,
-                                  const ComputeOptions options = ComputeOptions());
-
-
 //
 // This class is used to build the game tree. The root is created by the users and
 // the rest of the tree is created by add_node.
@@ -97,6 +78,16 @@ typename State::Move compute_move(const State root_state,
 	7. update
 */
 /************************************************************************/
+
+/***************************************************************************************/
+/* Define the df_stack to store the nodes UCT info in distributed UCT version */
+struct df_stack_UCT_info{
+	int best_move_visits;
+	double best_move_wins;
+	int second_best_move_visits;
+	double second_best_move_wins;
+	int parent_visits;
+};
 
 
 template<typename State>
@@ -119,27 +110,27 @@ public:
 	Node(const State& state);
 	~Node();
 
-	bool has_untried_moves() const;
+	bool has_untried_moves();
 	template<typename RandomEngine>
-	Move get_untried_move(RandomEngine* engine) const;
-	Node* best_child() const;
+	Move get_untried_move(RandomEngine* engine);
+	Node* best_child();
 
-	bool has_children() const
+	bool has_children()
 	{
 		return ! children.empty();
 	}
 
-	Node* select_child_UCT() const;
+	Node* select_child_UCT(df_stack_UCT_info *stack_UCT_info);
 	Node* add_child(const Move& move, const State& state);
-	void update(double result);
+	void update(double result, stack<df_stack_UCT_info*>&);
 
-	string to_string() const;
-	string tree_to_string(int max_depth = 1000000, int indent = 0) const;
+	string to_string();
+	string tree_to_string(int max_depth = 1000000, int indent = 0);
 
 private:
 	Node(const State& state, const Move& move, Node* parent);
 
-	string indent_string(int indent) const;
+	string indent_string(int indent);
 
 	Node(const Node&);
 	Node& operator = (const Node&);
@@ -148,7 +139,7 @@ private:
 };
 
 
-// Node class constructors
+/* Node class constructors */
 template<typename State>
 Node<State>::Node(const State& state) :
 	move({-1, -1}),
@@ -171,6 +162,7 @@ Node<State>::Node(const State& state, const Move& move_, Node* parent_) :
 	UCT_score(0)
 { }
 
+/* Node class destructor */
 template<typename State>
 Node<State>::~Node()
 {
@@ -178,5 +170,34 @@ Node<State>::~Node()
 		delete child;
 	}
 }
+
+
+/***************************************************************************************/
+/* Define the computation info such as the maximum iteration and time limitation*/
+class ComputeOptions
+{
+public:
+	//int number_of_threads;
+	int max_iterations;
+	double max_time;
+	bool verbose;
+
+	ComputeOptions(){
+		//number_of_threads = 8;
+		max_iterations = 10000;
+		max_time = -1.0; // default is no time limit.
+		verbose = false;
+	}
+
+	void check_local_UCT_stack(stack<df_stack_UCT_info*>&);
+
+	template<typename State>
+	unique_ptr<Node<State>> compute_tree(const State root_state,
+                                           const ComputeOptions options,
+                                           mt19937_64::result_type initial_seed);
+	template<typename State>
+	typename State::Move compute_move(const State root_state,
+                                  		const ComputeOptions options = ComputeOptions());
+};
 
 #endif
