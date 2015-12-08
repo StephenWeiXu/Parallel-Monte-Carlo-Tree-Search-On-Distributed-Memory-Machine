@@ -89,6 +89,25 @@ struct df_stack_UCT_info{
 	int parent_visits;
 };
 
+
+/***************************************************************************************/
+/* Define the computation info such as the maximum iteration and time limitation*/
+struct ComputeOptions
+{
+//int number_of_threads;
+int max_iterations;
+double max_time;
+bool verbose;
+
+ComputeOptions(){
+	//number_of_threads = 8;
+	max_iterations = 10000;
+	max_time = -1.0; // default is no time limit.
+	verbose = false;
+}
+};
+
+/***************************************************************************************/
 /* Define the Node class */
 template<typename State>
 class Node
@@ -172,22 +191,6 @@ Node<State>::~Node()
 }
 
 
-/***************************************************************************************/
-/* Define the computation info such as the maximum iteration and time limitation*/
-struct ComputeOptions
-{
-//int number_of_threads;
-int max_iterations;
-double max_time;
-bool verbose;
-
-ComputeOptions(){
-	//number_of_threads = 8;
-	max_iterations = 10000;
-	max_time = -1.0; // default is no time limit.
-	verbose = false;
-}
-};
 
 class MCTS{
 public:
