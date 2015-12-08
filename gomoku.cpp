@@ -2,7 +2,7 @@
 #include <ctime>
 using namespace std;
 
-#include "mcts.cpp"
+#include "mcts_helper.h"
 #include "gomoku.h"
 
 
@@ -212,7 +212,7 @@ int main()
 	player2_options.verbose = true;
 
 	GomokuState state;
-	MCTS mcts_computation;
+	// MCTS mcts_computation;
 	while (state.has_moves()) {
 		cout << endl << "State: " << state << endl;
 
@@ -220,7 +220,7 @@ int main()
 		if (state.player_to_move == 1) {
 			cout << "Computer is caculating its move..." << endl;
 			time(&start);
-			move = mcts_computation.compute_move(state, player1_options);
+			move = compute_move(state, player1_options);
 			state.do_move(move);
 			time(&end);
 			cout << "***************************" << endl;
@@ -248,7 +248,7 @@ int main()
 				move.clear();
 			}
 			else {
-				move = mcts_computation.compute_move(state, player2_options);
+				move = compute_move(state, player2_options);
 				state.do_move(move);
 			}
 		}

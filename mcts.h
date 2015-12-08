@@ -198,20 +198,20 @@ Node<State>::~Node()
 
 
 
-class MCTS{
-public:
-	template<typename State>
-	unique_ptr<Node<State>> compute_tree(const State root_state,
-	                                       const ComputeOptions options,
-	                                       mt19937_64::result_type initial_seed);
-	template<typename State>
-	typename State::Move compute_move(const State root_state,
-	                              		const ComputeOptions options = ComputeOptions());
+// class MCTS{
+// public:
+	// template<typename State>
+	// unique_ptr<Node<State>> compute_tree(const State root_state,
+	//                                        const ComputeOptions options,
+	//                                        mt19937_64::result_type initial_seed);
+	// template<typename State>
+	// typename State::Move compute_move(const State root_state,
+	//                               		const ComputeOptions options = ComputeOptions());
 
-	double cacul_UCT_score(double child_wins, int child_visits, int parent_visits);
+	// double cacul_UCT_score(double child_wins, int child_visits, int parent_visits);
 
-	int check_local_UCT_stack(stack<df_stack_UCT_info*> UCT_stack, bool& need_backtrack);
+	// int check_local_UCT_stack(stack<df_stack_UCT_info*> UCT_stack, bool& need_backtrack);
 
-};
+// };
 
 #endif
