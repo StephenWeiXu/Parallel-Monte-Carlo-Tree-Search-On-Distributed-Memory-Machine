@@ -125,10 +125,14 @@ public:
 
 	vector<Move> moves;
 	vector<Node*> children;
+	double UCT_score;
+
+	df_stack_UCT_info* stack_UCT_info;
 
 	Node(const State& state);
 	~Node();
 
+	double cacul_UCT_score(double child_wins, int child_visits, int parent_visits);
 	bool has_untried_moves();
 	template<typename RandomEngine>
 	Move get_untried_move(RandomEngine* engine);
@@ -141,7 +145,7 @@ public:
 
 	Node* select_child_UCT(df_stack_UCT_info *stack_UCT_info);
 	Node* add_child(const Move& move, const State& state);
-	void update(double result, stack<df_stack_UCT_info*>&);
+	void update(double result);
 
 	string to_string();
 	string tree_to_string(int max_depth = 1000000, int indent = 0);
@@ -154,7 +158,6 @@ private:
 	Node(const Node&);
 	Node& operator = (const Node&);
 
-	double UCT_score;
 };
 
 
@@ -167,7 +170,8 @@ Node<State>::Node(const State& state) :
 	wins(0),
 	visits(0),
 	moves(state.get_moves()),
-	UCT_score(0)
+	UCT_score(0),
+	stack_UCT_info(new df_stack_UCT_info())
 { }
 
 template<typename State>
@@ -178,7 +182,8 @@ Node<State>::Node(const State& state, const Move& move_, Node* parent_) :
 	wins(0),
 	visits(0),
 	moves(state.get_moves()),
-	UCT_score(0)
+	UCT_score(0),
+	stack_UCT_info(new df_stack_UCT_info())
 { }
 
 /* Node class destructor */
@@ -195,7 +200,7 @@ Node<State>::~Node()
 class MCTS{
 public:
 	template<typename State>	
-	void check_local_UCT_stack(stack<df_stack_UCT_info*>& UCT_stack);
+	void check_local_UCT_stack(stack<df_stack_UCT_info*> UCT_stack);
 
 	template<typename State>
 	unique_ptr<Node<State>> compute_tree(const State root_state,

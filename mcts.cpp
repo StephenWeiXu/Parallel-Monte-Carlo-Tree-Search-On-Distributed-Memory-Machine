@@ -6,6 +6,13 @@ using namespace std;
 
 /************************************************************************/
 template<typename State>
+double Node<State>::cacul_UCT_score(double child_wins, int child_visits, int parent_visits){
+	double uct_score = double(child_wins) / double(child_visits) +
+			sqrt(2.0 * log(double(parent_visits + 1)) / child_visits);	
+	return uct_score;
+}
+
+template<typename State>
 bool Node<State>::has_untried_moves()
 {
 	return ! moves.empty();
@@ -35,8 +42,7 @@ Node<State>* Node<State>::select_child_UCT(df_stack_UCT_info *stack_UCT_info)
 {
 	assert( ! children.empty() );
 	for (auto child: children) {
-		child->UCT_score = double(child->wins) / double(child->visits) +
-			sqrt(2.0 * log(double(this->visits + 1)) / child->visits);
+		child->UCT_score = cacul_UCT_score(child->wins, child->visits, this->visits);
 	}
 
 	sort(children.begin(), children.end(), [](Node* a, Node* b) { return a->UCT_score < b->UCT_score; });
@@ -68,11 +74,13 @@ Node<State>* Node<State>::add_child(const Move& move, const State& state)
 }
 
 template<typename State>
-void Node<State>::update(double result, stack<df_stack_UCT_info*>& df_UCT_stack)
+void Node<State>::update(double result)
 {
 	visits++;
-
 	wins += result;
+
+	stack_UCT_info->best_move_visits++;
+	stack_UCT_info->best_move_wins += result;  // Hopefully this will also change the values in the stack
 	//double my_wins = wins.load();
 	//while ( ! wins.compare_exchange_strong(my_wins, my_wins + result));
 }
@@ -115,8 +123,13 @@ string Node<State>::indent_string(int indent)
 
 /************************************************************************/
 template<typename State>
-void MCTS::check_local_UCT_stack(stack<df_stack_UCT_info*>& UCT_stack){
-	
+void MCTS::check_local_UCT_stack(stack<df_stack_UCT_info*> UCT_stack){
+	while(!UCT_stack.empty()){
+		df_stack_UCT_info* temp_UCT_info = UCT_stack.top();
+		UCT_stack.pop();
+
+
+	}
 }
 
 
@@ -153,10 +166,10 @@ unique_ptr<Node<State>> MCTS::compute_tree(const State root_state,
 		// Select a path through the tree to a leaf node.
 		// While loop will not be entered until this node has added all its untried moves (added all its possible children)
 		while (!node->has_untried_moves() && node->has_children()) {
-			df_stack_UCT_info *stack_UCT_info = new df_stack_UCT_info(); 
-			node = node->select_child_UCT(stack_UCT_info);
-			df_UCT_stack.push(stack_UCT_info);
+			auto best_child_node = node->select_child_UCT(node->stack_UCT_info);
+			df_UCT_stack.push(node->stack_UCT_info);
 			state.do_move(node->move);
+			node = best_child_node;
 		}
 
 		/* Expand */
@@ -178,7 +191,7 @@ unique_ptr<Node<State>> MCTS::compute_tree(const State root_state,
 		// We have now reached a final state. Backpropagate the result
 		// up the tree to the root node.
 		while (node != nullptr) {
-			node->update(state.get_result(node->player_to_move), df_UCT_stack);
+			node->update(state.get_result(node->player_to_move));
 			/* Check whether the situation is still satisfied or not */
 			node = node->parent;
 		}
