@@ -114,8 +114,9 @@ string Node<State>::indent_string(int indent)
 }
 
 /************************************************************************/
+template<typename State>
 void MCTS::check_local_UCT_stack(stack<df_stack_UCT_info*>& UCT_stack){
-
+	
 }
 
 

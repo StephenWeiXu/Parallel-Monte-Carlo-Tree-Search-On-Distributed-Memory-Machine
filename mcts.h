@@ -194,6 +194,7 @@ Node<State>::~Node()
 
 class MCTS{
 public:
+	template<typename State>	
 	void check_local_UCT_stack(stack<df_stack_UCT_info*>& UCT_stack);
 
 	template<typename State>
