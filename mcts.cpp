@@ -54,6 +54,8 @@ Node<State>* Node<State>::select_child_UCT(df_stack_UCT_info *stack_UCT_info)
 	stack_UCT_info->second_best_move_wins = children[1]->wins;
 	stack_UCT_info->parent_visits = visits;
 
+	second_best_child = children[1];
+
 	return children[0]; 
 	// return *max_element(children.begin(), children.end(),
 	// 	[](Node* a, Node* b) { return a->UCT_score < b->UCT_score; });
@@ -123,13 +125,31 @@ string Node<State>::indent_string(int indent)
 
 /************************************************************************/
 template<typename State>
-void MCTS::check_local_UCT_stack(stack<df_stack_UCT_info*> UCT_stack){
+double MCTS::cacul_UCT_score(double child_wins, int child_visits, int parent_visits){
+	double uct_score = double(child_wins) / double(child_visits) +
+			sqrt(2.0 * log(double(parent_visits + 1)) / child_visits);	
+	return uct_score;
+}
+
+template<typename State>
+int MCTS::check_local_UCT_stack(stack<df_stack_UCT_info*> UCT_stack, bool& need_backtrack){
+	int count = 0;
+	double uct_score_1, uct_score_2;
 	while(!UCT_stack.empty()){
 		df_stack_UCT_info* temp_UCT_info = UCT_stack.top();
 		UCT_stack.pop();
 
+		uct_score_1 = cacul_UCT_score(temp_UCT_info->best_move_wins, temp_UCT_info->best_move_visits, temp_UCT_info->parent_visits);
+		uct_score_2 = cacul_UCT_score(temp_UCT_info->second_best_move_wins, temp_UCT_info->second_best_move_visits, temp_UCT_info->parent_visits);
 
+		if (uct_score_1 < uct_score_2){
+			need_backtrack = true;
+			return count;  
+		}else{
+			count++;
+		}
 	}
+	return count;
 }
 
 
@@ -157,19 +177,21 @@ unique_ptr<Node<State>> MCTS::compute_tree(const State root_state,
 	
 	stack<df_stack_UCT_info*> df_UCT_stack;
 
+	auto node = root.get();
+	State state = root_state;
 	// Each iteration will again begin at the root node, which is inefficient!
 	for (int iter = 1; iter <= options.max_iterations || options.max_iterations < 0; ++iter) {
-		auto node = root.get(); // node->children.size() will increase by 1 for each iteration. the max size will be determined by state.has_moves()
-		State state = root_state;
+		// auto node = root.get(); // node->children.size() will increase by 1 for each iteration. the max size will be determined by state.has_moves()
+		// State state = root_state;
 
 		/* Select */
 		// Select a path through the tree to a leaf node.
 		// While loop will not be entered until this node has added all its untried moves (added all its possible children)
 		while (!node->has_untried_moves() && node->has_children()) {
-			auto best_child_node = node->select_child_UCT(node->stack_UCT_info);
+			auto temp_best_child = node->select_child_UCT(node->stack_UCT_info);
 			df_UCT_stack.push(node->stack_UCT_info);
 			state.do_move(node->move);
-			node = best_child_node;
+			node = temp_best_child;
 		}
 
 		/* Expand */
@@ -190,11 +212,25 @@ unique_ptr<Node<State>> MCTS::compute_tree(const State root_state,
 		/* Backpropagate */
 		// We have now reached a final state. Backpropagate the result
 		// up the tree to the root node.
-		while (node != nullptr) {
-			node->update(state.get_result(node->player_to_move));
-			/* Check whether the situation is still satisfied or not */
-			node = node->parent;
+		node->update(state.get_result(node->player_to_move));
+		node = node->parent;
+		bool need_backtrack_flag = false;
+		int backtrack_pos = df_UCT_stack.size() - check_local_UCT_stack(df_UCT_stack, need_backtrack_flag);
+		if(need_backtrack_flag){
+			while(backtrack_pos > 0){
+				node->update(state.get_result(node->player_to_move));
+				node = node->parent;
+				backtrack_pos--;
+			}
 		}
+
+		node = node->second_best_child;
+
+		// while (node != nullptr) {
+		// 	node->update(state.get_result(node->player_to_move));
+		// 	/* Check whether the situation is still satisfied or not */
+		// 	node = node->parent;
+		// }
 
 		/* When update, also update the best move visits&wins in the stack_UCT_info */
 

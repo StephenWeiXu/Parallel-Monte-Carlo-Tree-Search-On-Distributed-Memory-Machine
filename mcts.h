@@ -127,6 +127,7 @@ public:
 	vector<Node*> children;
 	double UCT_score;
 
+	Node<State> *second_best_child;
 	df_stack_UCT_info* stack_UCT_info;
 
 	Node(const State& state);
@@ -199,9 +200,6 @@ Node<State>::~Node()
 
 class MCTS{
 public:
-	template<typename State>	
-	void check_local_UCT_stack(stack<df_stack_UCT_info*> UCT_stack);
-
 	template<typename State>
 	unique_ptr<Node<State>> compute_tree(const State root_state,
 	                                       const ComputeOptions options,
@@ -209,6 +207,11 @@ public:
 	template<typename State>
 	typename State::Move compute_move(const State root_state,
 	                              		const ComputeOptions options = ComputeOptions());
+
+	double cacul_UCT_score(double child_wins, int child_visits, int parent_visits);
+
+	int check_local_UCT_stack(stack<df_stack_UCT_info*> UCT_stack, bool& need_backtrack);
+
 };
 
 #endif
