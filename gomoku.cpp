@@ -2,7 +2,6 @@
 #include <ctime>
 using namespace std;
 
-#include "mcts.cpp"
 #include "gomoku.h"
 
 

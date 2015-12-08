@@ -1,3 +1,6 @@
+#ifndef GOMOKU_HEADER
+#define GOMOKU_HEADER
+
 #include <algorithm>
 #include <iostream>
 using namespace std;
@@ -49,3 +52,4 @@ ostream& operator << (ostream& out, const GomokuState& state)
 	return out;
 }
 
+#endif

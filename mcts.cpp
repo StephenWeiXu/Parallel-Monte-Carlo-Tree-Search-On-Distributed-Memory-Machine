@@ -114,7 +114,7 @@ string Node<State>::indent_string(int indent)
 }
 
 /************************************************************************/
-void ComputeOptions::check_local_UCT_stack(stack<df_stack_UCT_info*>&){
+void ComputeOptions::check_local_UCT_stack(stack<df_stack_UCT_info*>& UCT_stack){
 
 }
 

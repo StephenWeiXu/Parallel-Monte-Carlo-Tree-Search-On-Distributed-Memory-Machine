@@ -89,7 +89,7 @@ struct df_stack_UCT_info{
 	int parent_visits;
 };
 
-
+/* Define the Node class */
 template<typename State>
 class Node
 {
@@ -189,7 +189,7 @@ public:
 		verbose = false;
 	}
 
-	void check_local_UCT_stack(stack<df_stack_UCT_info*>&);
+	void check_local_UCT_stack(stack<df_stack_UCT_info*>& UCT_stack);
 
 	template<typename State>
 	unique_ptr<Node<State>> compute_tree(const State root_state,
