@@ -114,13 +114,13 @@ string Node<State>::indent_string(int indent)
 }
 
 /************************************************************************/
-void ComputeOptions::check_local_UCT_stack(stack<df_stack_UCT_info*>& UCT_stack){
+void MCTS::check_local_UCT_stack(stack<df_stack_UCT_info*>& UCT_stack){
 
 }
 
 
 template<typename State>
-unique_ptr<Node<State>> ComputeOptions::compute_tree(const State root_state,
+unique_ptr<Node<State>> MCTS::compute_tree(const State root_state,
                                            const ComputeOptions options,
                                            mt19937_64::result_type initial_seed)
 {
@@ -204,7 +204,7 @@ unique_ptr<Node<State>> ComputeOptions::compute_tree(const State root_state,
 }
 
 template<typename State>
-typename State::Move ComputeOptions::compute_move(const State root_state,
+typename State::Move MCTS::compute_move(const State root_state,
                                   const ComputeOptions options)
 {
 	/* Will support more players later. */

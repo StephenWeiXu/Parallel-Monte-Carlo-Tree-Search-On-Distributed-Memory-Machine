@@ -211,7 +211,7 @@ int main()
 	player2_options.verbose = true;
 
 	GomokuState state;
-	ComputeOptions mcts_computation;
+	MCTS mcts_computation;
 	while (state.has_moves()) {
 		cout << endl << "State: " << state << endl;
 

@@ -174,30 +174,32 @@ Node<State>::~Node()
 
 /***************************************************************************************/
 /* Define the computation info such as the maximum iteration and time limitation*/
-class ComputeOptions
+struct ComputeOptions
 {
+//int number_of_threads;
+int max_iterations;
+double max_time;
+bool verbose;
+
+ComputeOptions(){
+	//number_of_threads = 8;
+	max_iterations = 10000;
+	max_time = -1.0; // default is no time limit.
+	verbose = false;
+}
+};
+
+class MCTS{
 public:
-	//int number_of_threads;
-	int max_iterations;
-	double max_time;
-	bool verbose;
-
-	ComputeOptions(){
-		//number_of_threads = 8;
-		max_iterations = 10000;
-		max_time = -1.0; // default is no time limit.
-		verbose = false;
-	}
-
 	void check_local_UCT_stack(stack<df_stack_UCT_info*>& UCT_stack);
 
 	template<typename State>
 	unique_ptr<Node<State>> compute_tree(const State root_state,
-                                           const ComputeOptions options,
-                                           mt19937_64::result_type initial_seed);
+	                                       const ComputeOptions options,
+	                                       mt19937_64::result_type initial_seed);
 	template<typename State>
 	typename State::Move compute_move(const State root_state,
-                                  		const ComputeOptions options = ComputeOptions());
+	                              		const ComputeOptions options = ComputeOptions());
 };
 
 #endif
