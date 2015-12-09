@@ -15,7 +15,6 @@
 #include <thread>
 #include <vector>
 #include <cassert>
-#include <stack>
 
 using namespace std;
 
@@ -63,6 +62,26 @@ private:
 //
 /************************************************************************/
 
+struct ComputeOptions
+{
+	//int number_of_threads;
+	int max_iterations;
+	double max_time;
+	bool verbose;
+
+	ComputeOptions(){
+		//number_of_threads = 8;
+		max_iterations = 10000;
+		max_time = -1.0; // default is no time limit.
+		verbose = false;
+	}
+};
+
+template<typename State>
+typename State::Move compute_move(const State root_state,
+                                  const ComputeOptions options = ComputeOptions());
+
+
 //
 // This class is used to build the game tree. The root is created by the users and
 // the rest of the tree is created by add_node.
@@ -79,36 +98,7 @@ private:
 */
 /************************************************************************/
 
-/***************************************************************************************/
-/* Define the df_stack to store the nodes UCT info in distributed UCT version */
-struct df_stack_UCT_info{
-	int best_move_visits;
-	double best_move_wins;
-	int second_best_move_visits;
-	double second_best_move_wins;
-	int parent_visits;
-};
 
-
-/***************************************************************************************/
-/* Define the computation info such as the maximum iteration and time limitation*/
-struct ComputeOptions
-{
-//int number_of_threads;
-int max_iterations;
-double max_time;
-bool verbose;
-
-ComputeOptions(){
-	//number_of_threads = 8;
-	max_iterations = 10000;
-	max_time = -1.0; // default is no time limit.
-	verbose = false;
-}
-};
-
-/***************************************************************************************/
-/* Define the Node class */
 template<typename State>
 class Node
 {
@@ -125,44 +115,40 @@ public:
 
 	vector<Move> moves;
 	vector<Node*> children;
-	double UCT_score;
-
-	Node<State> *second_best_child;
-	df_stack_UCT_info* stack_UCT_info;
 
 	Node(const State& state);
 	~Node();
 
-	double cacul_UCT_score(double child_wins, int child_visits, int parent_visits);
-	bool has_untried_moves();
+	bool has_untried_moves() const;
 	template<typename RandomEngine>
-	Move get_untried_move(RandomEngine* engine);
-	Node* best_child();
+	Move get_untried_move(RandomEngine* engine) const;
+	Node* best_child() const;
 
-	bool has_children()
+	bool has_children() const
 	{
 		return ! children.empty();
 	}
 
-	Node* select_child_UCT(df_stack_UCT_info *stack_UCT_info);
+	Node* select_child_UCT() const;
 	Node* add_child(const Move& move, const State& state);
 	void update(double result);
 
-	string to_string();
-	string tree_to_string(int max_depth = 1000000, int indent = 0);
+	string to_string() const;
+	string tree_to_string(int max_depth = 1000000, int indent = 0) const;
 
 private:
 	Node(const State& state, const Move& move, Node* parent);
 
-	string indent_string(int indent);
+	string indent_string(int indent) const;
 
 	Node(const Node&);
 	Node& operator = (const Node&);
 
+	double UCT_score;
 };
 
 
-/* Node class constructors */
+// Node class constructors
 template<typename State>
 Node<State>::Node(const State& state) :
 	move({-1, -1}),
@@ -171,8 +157,7 @@ Node<State>::Node(const State& state) :
 	wins(0),
 	visits(0),
 	moves(state.get_moves()),
-	UCT_score(0),
-	stack_UCT_info(new df_stack_UCT_info())
+	UCT_score(0)
 { }
 
 template<typename State>
@@ -183,11 +168,9 @@ Node<State>::Node(const State& state, const Move& move_, Node* parent_) :
 	wins(0),
 	visits(0),
 	moves(state.get_moves()),
-	UCT_score(0),
-	stack_UCT_info(new df_stack_UCT_info())
+	UCT_score(0)
 { }
 
-/* Node class destructor */
 template<typename State>
 Node<State>::~Node()
 {
@@ -195,19 +178,5 @@ Node<State>::~Node()
 		delete child;
 	}
 }
-
-
-template<typename State>
-unique_ptr<Node<State>> compute_tree(const State root_state,
-                                       const ComputeOptions options,
-                                       mt19937_64::result_type initial_seed);
-template<typename State>
-typename State::Move compute_move(const State root_state,
-                              		const ComputeOptions options = ComputeOptions());
-
-double cacul_UCT_score(double child_wins, int child_visits, int parent_visits);
-
-int check_local_UCT_stack(stack<df_stack_UCT_info*> UCT_stack, bool& need_backtrack);
-
 
 #endif

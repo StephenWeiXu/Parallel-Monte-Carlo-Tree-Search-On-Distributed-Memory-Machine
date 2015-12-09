@@ -1,12 +1,10 @@
 #include <iostream>
 #include <ctime>
-
-#include "gomoku.h"
-#include "mcts.cpp"
-
 using namespace std;
 
-/***************************************************************************************/
+#include "mcts.cpp"
+#include "gomoku.h"
+
 typedef vector<int> Move; 
 const char GomokuState::player_markers[3] = {'.', 'X', 'O'}; 
 
@@ -200,9 +198,7 @@ bool GomokuState::check_invalid_move(int row, int col, string& error_msg){
 	return true;
 }
 
-
-
-int main()
+void main_program()
 {
 	bool human_player = true;
 	time_t start, end;
@@ -232,9 +228,9 @@ int main()
 				int row_move, col_move;
 				while (true) {
 					cout << "Input your move: \n";
-					cout << "  Row index(0-5): ";
+					cout << "Row index(0-5): ";
 					cin >> row_move;
-					cout << "  Column index(0-5): ";
+					cout << "Column index(0-5): ";
 					cin >> col_move;
 					move = {row_move, col_move};
 
@@ -266,6 +262,15 @@ int main()
 	else {
 		cout << "We tie!" << endl;
 	}
+}
 
-	return 0;
+int main()
+{
+	try {
+		main_program();
+	}
+	catch (std::runtime_error& error) {
+		std::cerr << "ERROR: " << error.what() << std::endl;
+		return 1;
+	}
 }

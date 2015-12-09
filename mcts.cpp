@@ -3,24 +3,16 @@ using namespace std;
 
 #include "mcts.h"
 
-
 /************************************************************************/
 template<typename State>
-double Node<State>::cacul_UCT_score(double child_wins, int child_visits, int parent_visits){
-	double uct_score = double(child_wins) / double(child_visits) +
-			sqrt(2.0 * log(double(parent_visits + 1)) / child_visits);	
-	return uct_score;
-}
-
-template<typename State>
-bool Node<State>::has_untried_moves()
+bool Node<State>::has_untried_moves() const
 {
 	return ! moves.empty();
 }
 
 template<typename State>
 template<typename RandomEngine>
-typename State::Move Node<State>::get_untried_move(RandomEngine* engine)
+typename State::Move Node<State>::get_untried_move(RandomEngine* engine) const
 {
 	assert( ! moves.empty());
 	uniform_int_distribution<size_t> moves_distribution(0, moves.size() - 1);
@@ -28,7 +20,7 @@ typename State::Move Node<State>::get_untried_move(RandomEngine* engine)
 }
 
 template<typename State>
-Node<State>* Node<State>::best_child()
+Node<State>* Node<State>::best_child() const
 {
 	assert(moves.empty());
 	assert( ! children.empty() );
@@ -38,27 +30,16 @@ Node<State>* Node<State>::best_child()
 }
 
 template<typename State>
-Node<State>* Node<State>::select_child_UCT(df_stack_UCT_info *stack_UCT_info)
+Node<State>* Node<State>::select_child_UCT() const
 {
 	assert( ! children.empty() );
 	for (auto child: children) {
-		child->UCT_score = cacul_UCT_score(child->wins, child->visits, this->visits);
+		child->UCT_score = double(child->wins) / double(child->visits) +
+			sqrt(2.0 * log(double(this->visits + 1)) / child->visits);
 	}
 
-	sort(children.begin(), children.end(), [](Node* a, Node* b) { return a->UCT_score < b->UCT_score; });
-	
-	/* initialize the stack_UCT_info */
-	stack_UCT_info->best_move_visits = children[0]->visits;
-	stack_UCT_info->best_move_wins = children[0]->wins;
-	stack_UCT_info->second_best_move_visits = children[1]->visits;
-	stack_UCT_info->second_best_move_wins = children[1]->wins;
-	stack_UCT_info->parent_visits = visits;
-
-	second_best_child = children[1];
-
-	return children[0]; 
-	// return *max_element(children.begin(), children.end(),
-	// 	[](Node* a, Node* b) { return a->UCT_score < b->UCT_score; });
+	return *max_element(children.begin(), children.end(),
+		[](Node* a, Node* b) { return a->UCT_score < b->UCT_score; });
 }
 
 template<typename State>
@@ -79,16 +60,14 @@ template<typename State>
 void Node<State>::update(double result)
 {
 	visits++;
-	wins += result;
 
-	stack_UCT_info->best_move_visits++;
-	stack_UCT_info->best_move_wins += result;  // Hopefully this will also change the values in the stack
+	wins += result;
 	//double my_wins = wins.load();
 	//while ( ! wins.compare_exchange_strong(my_wins, my_wins + result));
 }
 
 template<typename State>
-string Node<State>::to_string()
+string Node<State>::to_string() const
 {
 	stringstream sout;
 	sout << "["
@@ -100,7 +79,7 @@ string Node<State>::to_string()
 }
 
 template<typename State>
-string Node<State>::tree_to_string(int max_depth, int indent)
+string Node<State>::tree_to_string(int max_depth, int indent) const
 {
 	if (indent >= max_depth) {
 		return "";
@@ -114,7 +93,7 @@ string Node<State>::tree_to_string(int max_depth, int indent)
 }
 
 template<typename State>
-string Node<State>::indent_string(int indent)
+string Node<State>::indent_string(int indent) const
 {
 	string s = "";
 	for (int i = 1; i <= indent; ++i) {
@@ -124,32 +103,6 @@ string Node<State>::indent_string(int indent)
 }
 
 /************************************************************************/
-double cacul_UCT_score(double child_wins, int child_visits, int parent_visits){
-	double uct_score = double(child_wins) / double(child_visits) +
-			sqrt(2.0 * log(double(parent_visits + 1)) / child_visits);	
-	return uct_score;
-}
-
-int check_local_UCT_stack(stack<df_stack_UCT_info*> UCT_stack, bool& need_backtrack){
-	int count = 0;
-	double uct_score_1, uct_score_2;
-	while(!UCT_stack.empty()){
-		df_stack_UCT_info* temp_UCT_info = UCT_stack.top();
-		UCT_stack.pop();
-
-		uct_score_1 = cacul_UCT_score(temp_UCT_info->best_move_wins, temp_UCT_info->best_move_visits, temp_UCT_info->parent_visits);
-		uct_score_2 = cacul_UCT_score(temp_UCT_info->second_best_move_wins, temp_UCT_info->second_best_move_visits, temp_UCT_info->parent_visits);
-
-		if (uct_score_1 < uct_score_2){
-			need_backtrack = true;
-			return count;  
-		}else{
-			count++;
-		}
-	}
-	return count;
-}
-
 
 template<typename State>
 unique_ptr<Node<State>> compute_tree(const State root_state,
@@ -172,26 +125,18 @@ unique_ptr<Node<State>> compute_tree(const State root_state,
 	// double start_time = ::omp_get_wtime();
 	// double print_time = start_time;
 	// #endif
-	
-	stack<df_stack_UCT_info*> df_UCT_stack;
 
-	auto node = root.get();
-	State state = root_state;
-	bool select_child_flag = false;
 	// Each iteration will again begin at the root node, which is inefficient!
 	for (int iter = 1; iter <= options.max_iterations || options.max_iterations < 0; ++iter) {
-		// auto node = root.get(); // node->children.size() will increase by 1 for each iteration. the max size will be determined by state.has_moves()
-		// State state = root_state;
+		auto node = root.get(); // node->children.size() will increase by 1 for each iteration. the max size will be determined by state.has_moves()
+		State state = root_state;
 
 		/* Select */
 		// Select a path through the tree to a leaf node.
 		// While loop will not be entered until this node has added all its untried moves (added all its possible children)
 		while (!node->has_untried_moves() && node->has_children()) {
-			auto temp_best_child = node->select_child_UCT(node->stack_UCT_info);
-			df_UCT_stack.push(node->stack_UCT_info);
-			node = temp_best_child;
+			node = node->select_child_UCT();
 			state.do_move(node->move);
-			select_child_flag = true;
 		}
 
 		/* Expand */
@@ -212,31 +157,10 @@ unique_ptr<Node<State>> compute_tree(const State root_state,
 		/* Backpropagate */
 		// We have now reached a final state. Backpropagate the result
 		// up the tree to the root node.
-		node->update(state.get_result(node->player_to_move));
-		node = node->parent;
-		
-		if (select_child_flag){
-			bool need_backtrack_flag = false;
-			int backtrack_pos = df_UCT_stack.size() - check_local_UCT_stack(df_UCT_stack, need_backtrack_flag);
-			if(need_backtrack_flag){
-				while(backtrack_pos > 0){
-					node->update(state.get_result(node->player_to_move));
-					node = node->parent;
-					df_UCT_stack.pop();
-					backtrack_pos--;
-				}
-			}
-			node = node->second_best_child;
+		while (node != nullptr) {
+			node->update(state.get_result(node->player_to_move));
+			node = node->parent;
 		}
-
-		// while (node != nullptr) {
-		// 	node->update(state.get_result(node->player_to_move));
-		// 	/* Check whether the situation is still satisfied or not */
-		// 	node = node->parent;
-		// }
-
-		/* When update, also update the best move visits&wins in the stack_UCT_info */
-
 
 		// #ifdef USE_OPENMP
 		// if (options.verbose || options.max_time >= 0) {
@@ -260,6 +184,8 @@ template<typename State>
 typename State::Move compute_move(const State root_state,
                                   const ComputeOptions options)
 {
+	using namespace std;
+
 	/* Will support more players later. */
 	assert(root_state.player_to_move == 1 || root_state.player_to_move == 2);
 
