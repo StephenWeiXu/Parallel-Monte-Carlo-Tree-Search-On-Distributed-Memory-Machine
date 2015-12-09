@@ -1,9 +1,9 @@
 CC = g++
-CFLAGS = -g -O -fdiagnostics-color=always -Wall -Werror -std=c++11
+CFLAGS = -g -O -Wall -Werror -std=c++11
 
 all:
-	$(CC) main.cpp $(CFLAGS) -o main.o
+	$(CC) gomoku.cpp $(CFLAGS) -o gomoku.o
 clean:
 	rm *.o
 test:
-	./main.o
+	./gomoku.o

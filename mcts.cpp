@@ -124,13 +124,13 @@ string Node<State>::indent_string(int indent)
 }
 
 /************************************************************************/
-double MCTS::cacul_UCT_score(double child_wins, int child_visits, int parent_visits){
+double cacul_UCT_score(double child_wins, int child_visits, int parent_visits){
 	double uct_score = double(child_wins) / double(child_visits) +
 			sqrt(2.0 * log(double(parent_visits + 1)) / child_visits);	
 	return uct_score;
 }
 
-int MCTS::check_local_UCT_stack(stack<df_stack_UCT_info*> UCT_stack, bool& need_backtrack){
+int check_local_UCT_stack(stack<df_stack_UCT_info*> UCT_stack, bool& need_backtrack){
 	int count = 0;
 	double uct_score_1, uct_score_2;
 	while(!UCT_stack.empty()){
@@ -152,7 +152,7 @@ int MCTS::check_local_UCT_stack(stack<df_stack_UCT_info*> UCT_stack, bool& need_
 
 
 template<typename State>
-unique_ptr<Node<State>> MCTS::compute_tree(const State root_state,
+unique_ptr<Node<State>> compute_tree(const State root_state,
                                            const ComputeOptions options,
                                            mt19937_64::result_type initial_seed)
 {
@@ -177,6 +177,7 @@ unique_ptr<Node<State>> MCTS::compute_tree(const State root_state,
 
 	auto node = root.get();
 	State state = root_state;
+	bool select_child_flag = false;
 	// Each iteration will again begin at the root node, which is inefficient!
 	for (int iter = 1; iter <= options.max_iterations || options.max_iterations < 0; ++iter) {
 		// auto node = root.get(); // node->children.size() will increase by 1 for each iteration. the max size will be determined by state.has_moves()
@@ -188,8 +189,9 @@ unique_ptr<Node<State>> MCTS::compute_tree(const State root_state,
 		while (!node->has_untried_moves() && node->has_children()) {
 			auto temp_best_child = node->select_child_UCT(node->stack_UCT_info);
 			df_UCT_stack.push(node->stack_UCT_info);
-			state.do_move(node->move);
 			node = temp_best_child;
+			state.do_move(node->move);
+			select_child_flag = true;
 		}
 
 		/* Expand */
@@ -210,19 +212,20 @@ unique_ptr<Node<State>> MCTS::compute_tree(const State root_state,
 		/* Backpropagate */
 		// We have now reached a final state. Backpropagate the result
 		// up the tree to the root node.
-		node->update(state.get_result(node->player_to_move));
-		node = node->parent;
-		bool need_backtrack_flag = false;
-		int backtrack_pos = df_UCT_stack.size() - check_local_UCT_stack(df_UCT_stack, need_backtrack_flag);
-		if(need_backtrack_flag){
-			while(backtrack_pos > 0){
-				node->update(state.get_result(node->player_to_move));
-				node = node->parent;
-				backtrack_pos--;
+		if (select_child_flag){
+			node->update(state.get_result(node->player_to_move));
+			node = node->parent;
+			bool need_backtrack_flag = false;
+			int backtrack_pos = df_UCT_stack.size() - check_local_UCT_stack(df_UCT_stack, need_backtrack_flag);
+			if(need_backtrack_flag){
+				while(backtrack_pos > 0){
+					node->update(state.get_result(node->player_to_move));
+					node = node->parent;
+					backtrack_pos--;
+				}
 			}
+			node = node->second_best_child;
 		}
-
-		node = node->second_best_child;
 
 		// while (node != nullptr) {
 		// 	node->update(state.get_result(node->player_to_move));
@@ -252,7 +255,7 @@ unique_ptr<Node<State>> MCTS::compute_tree(const State root_state,
 }
 
 template<typename State>
-typename State::Move MCTS::compute_move(const State root_state,
+typename State::Move compute_move(const State root_state,
                                   const ComputeOptions options)
 {
 	/* Will support more players later. */
