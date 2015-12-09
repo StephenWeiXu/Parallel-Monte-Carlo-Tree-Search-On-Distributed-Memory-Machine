@@ -212,15 +212,17 @@ unique_ptr<Node<State>> compute_tree(const State root_state,
 		/* Backpropagate */
 		// We have now reached a final state. Backpropagate the result
 		// up the tree to the root node.
+		node->update(state.get_result(node->player_to_move));
+		node = node->parent;
+		
 		if (select_child_flag){
-			node->update(state.get_result(node->player_to_move));
-			node = node->parent;
 			bool need_backtrack_flag = false;
 			int backtrack_pos = df_UCT_stack.size() - check_local_UCT_stack(df_UCT_stack, need_backtrack_flag);
 			if(need_backtrack_flag){
 				while(backtrack_pos > 0){
 					node->update(state.get_result(node->player_to_move));
 					node = node->parent;
+					df_UCT_stack.pop();
 					backtrack_pos--;
 				}
 			}
