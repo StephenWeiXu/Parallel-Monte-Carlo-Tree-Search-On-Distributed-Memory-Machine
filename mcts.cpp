@@ -103,6 +103,40 @@ string Node<State>::indent_string(int indent) const
 }
 
 /************************************************************************/
+template<typename State>
+Node<State>* mcts_select(Node<State> *node, State& state){
+	while (!node->has_untried_moves() && node->has_children()) {
+		node = node->select_child_UCT();
+		state.do_move(node->move);
+	}
+	return node;	
+}
+
+template<typename State>
+Node<State>* mcts_expand(Node<State> *node, State& state, mt19937_64 random_engine){
+	if (node->has_untried_moves()) {
+		auto move = node->get_untried_move(&random_engine);
+		state.do_move(move);
+		node = node->add_child(move, state); // The returnt node is the added child node, not the parent node, its children will be 0
+	}
+	return node;
+}
+
+template<typename State>
+void mcts_playout(State& state, mt19937_64 random_engine){
+	while (state.has_moves()) {
+		state.do_random_move(&random_engine);
+	}
+}
+
+template<typename State>
+Node<State>* mcts_backpropagate(Node<State> *node, State& state){
+	while (node != nullptr) {
+		node->update(state.get_result(node->player_to_move));
+		node = node->parent;
+	}
+	return node;	
+}
 
 template<typename State>
 unique_ptr<Node<State>> compute_tree(const State root_state,
@@ -134,33 +168,21 @@ unique_ptr<Node<State>> compute_tree(const State root_state,
 		/* Select */
 		// Select a path through the tree to a leaf node.
 		// While loop will not be entered until this node has added all its untried moves (added all its possible children)
-		while (!node->has_untried_moves() && node->has_children()) {
-			node = node->select_child_UCT();
-			state.do_move(node->move);
-		}
+		node = mcts_select(node, state);
 
 		/* Expand */
 		// If we are not already at the final state, expand the
 		// tree with a new node and move there.
-		if (node->has_untried_moves()) {
-			auto move = node->get_untried_move(&random_engine);
-			state.do_move(move);
-			node = node->add_child(move, state); // The returnt node is the added child node, not the parent node, its children will be 0
-		}
+		node = mcts_expand(node, state, random_engine);
 
 		/* Playout */
 		// We now play randomly until the game ends.
-		while (state.has_moves()) {
-			state.do_random_move(&random_engine);
-		}
+		mcts_playout(state, random_engine);
 
 		/* Backpropagate */
 		// We have now reached a final state. Backpropagate the result
 		// up the tree to the root node.
-		while (node != nullptr) {
-			node->update(state.get_result(node->player_to_move));
-			node = node->parent;
-		}
+		node = mcts_backpropagate(node, state);
 
 		// #ifdef USE_OPENMP
 		// if (options.verbose || options.max_time >= 0) {

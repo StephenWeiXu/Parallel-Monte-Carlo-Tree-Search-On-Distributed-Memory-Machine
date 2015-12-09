@@ -5,6 +5,12 @@ using namespace std;
 #include "mcts.cpp"
 #include "gomoku.h"
 
+/* Use a constant instead of transposing the key depending on the side to play.
+	This is more efficient, since I can more easily undo operations (so I can
+	incrementally update the key). */
+static const uint64_t play1_to_move_key = 0x8913125CFB309AFC; 
+
+/********************************************************************************/
 typedef vector<int> Move; 
 const char GomokuState::player_markers[3] = {'.', 'X', 'O'}; 
 
@@ -198,7 +204,54 @@ bool GomokuState::check_invalid_move(int row, int col, string& error_msg){
 	return true;
 }
 
-void main_program()
+/* Generate Zobrist hash keys */
+int GomokuState::get_pos_marker_ind(char board_pos_marker){
+	if (board_pos_marker == player_markers[0]){
+		return 0;
+	}else if (board_pos_marker == player_markers[1]){
+		return 1;
+	}else{
+		return 2;
+	}	
+}
+
+void GomokuState::initialize_zobrist_table(){
+	MersenneTwister rand_gene;
+	for (int i=0; i< num_rows; i++){
+		for (int j=0; j< num_cols; j++){
+			for (int k=0; k<3; k++){
+				zobrist_table[i][j][k] = rand_gene.Rand64();
+			}
+		}
+	}
+}
+
+uint64_t GomokuState::caculate_zobrist_key(int player_move){
+	uint64_t zobrist_key = 0;
+	for (int i=0; i<num_rows; i++){
+		for (int j=0; j<num_cols; j++){
+			int marker = get_pos_marker_ind(board[i][j]);
+			zobrist_key ^= zobrist_table[i][j][marker];
+		}
+	}
+	if (player_move == 1){
+		zobrist_key ^= play1_to_move_key;
+	}
+
+	return zobrist_key;
+}
+
+uint64_t GomokuState::update_zobrist_key(uint64_t old_key, char old_marker, char new_marker, vector<int> board_pos){
+	uint64_t new_key = old_key;
+	int old_marker_ind = get_pos_marker_ind(old_marker);
+	int new_marker_ind = get_pos_marker_ind(new_marker);
+	new_key ^= zobrist_table[board_pos[0]][board_pos[1]][old_marker_ind];
+	new_key ^= zobrist_table[board_pos[0]][board_pos[1]][new_marker_ind];
+	new_key ^= play1_to_move_key;
+	return new_key;
+}
+
+int main()
 {
 	bool human_player = true;
 	time_t start, end;
@@ -262,15 +315,24 @@ void main_program()
 	else {
 		cout << "We tie!" << endl;
 	}
+
+	return 0;
 }
 
-int main()
-{
-	try {
-		main_program();
-	}
-	catch (std::runtime_error& error) {
-		std::cerr << "ERROR: " << error.what() << std::endl;
-		return 1;
-	}
-}
+// int main()
+// {
+
+// 	GomokuState state;
+	
+// 	uint64_t initial_key = state.caculate_zobrist_key(1);
+// 	cout << "initial key: " << initial_key << endl;
+
+// 	cout << "now update" << endl;
+
+// 	uint64_t new_key = state.update_zobrist_key(initial_key, state.player_markers[0], state.player_markers[1], {1,3});
+
+// 	cout << "new key: " << new_key << endl;
+
+// 	return 0;
+
+// }
