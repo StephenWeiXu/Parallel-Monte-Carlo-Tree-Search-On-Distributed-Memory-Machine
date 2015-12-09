@@ -206,7 +206,7 @@ public:
 	template<typename State>
 	typename State::Move compute_move(const State root_state,
 	                              		const ComputeOptions options = ComputeOptions());
-
+	
 	double cacul_UCT_score(double child_wins, int child_visits, int parent_visits);
 
 	int check_local_UCT_stack(stack<df_stack_UCT_info*> UCT_stack, bool& need_backtrack);
