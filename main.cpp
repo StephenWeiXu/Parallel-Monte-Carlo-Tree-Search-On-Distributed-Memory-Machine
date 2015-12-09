@@ -1,4 +1,5 @@
-#include "gomoku.h"
+#include "gomoku.cpp"
+#include "mcts.cpp"
 
 using namespace std;
 
