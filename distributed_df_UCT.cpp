@@ -16,13 +16,19 @@ enum job_t {SEARCH, REPORT};
 
 struct Job_struct{
 	job_t type;
-	Node<GomokuState> job_node;
+	Node<GomokuState> *job_node;
+	GomokuState state;
 	Job_struct():job_node(new Node<GomokuState>()){}
 };
 
+int zobrist_to_proc(uint64_t zobrist_key){
 
-void zobrist_hash(Node<GomokuState> *node){
+}
 
+int zobrist_hash(GomokuState state, Node<GomokuState> *node){
+	uint64_t hash_key = state.caculate_zobrist_key(state.player_to_move, node->move);
+	int home_proc = zobrist_to_proc(hash_key);
+	return home_proc;
 }
 
 void look_up_hash_table(Node<GomokuState> *node){
@@ -91,10 +97,28 @@ int main(int argc, char** argv){
 						Job_struct search_job;
 						search_job.type = SEARCH;
 						search_job.job_node = child_node;
-						int home_processor_rank = zobrist_hash(child_node);
+						search_job.state = root_state;
+						int home_processor_rank = zobrist_hash(root_state, child_node);
 
-						MPI_Isend(search_job, sizeof(search_job), MPI_DATATYPE, home_processor_rank, 1, MPI_COMM_WORLD, &request);
+						MPI_Isend(&search_job, sizeof(search_job), MPI_DERIVED_DATATYPE, home_processor_rank, 1, MPI_COMM_WORLD, &request);
 						continue;
+					}
+				}
+			}
+
+			/* TDS_UCT for every processor  */
+			while(!finishd()){
+				if (Job_queue.empty()){
+					Job_struct new_job = new Job_struct();
+					MPI_Recv(&new_job, sizeof(new_job), MPI_DERIVED_DATATYPE, MPI_ANY_SOURCE, 1, MPI_COMM_WORLD, &status);
+					Job_queue.push(new_job);
+				}else{
+					Job_struct ready_job = Job_queue.pop();
+					Node<GomokuState> *ready_node = ready_job.job_node;
+					node_data = look_up_hash_table(ready_node);
+
+					if (ready_job.type == SEARCH){
+						
 					}
 				}
 			}

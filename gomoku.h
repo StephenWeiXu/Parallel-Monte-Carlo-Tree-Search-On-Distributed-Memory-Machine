@@ -49,7 +49,7 @@ public:
 	/* Generate Zobrist hash keys */
 	int get_pos_marker_ind(char board_pos_marker);
 	void initialize_zobrist_table();
-	uint64_t caculate_zobrist_key(int player_move);
+	uint64_t caculate_zobrist_key(int player_move, vector<int> board_pos);
 	uint64_t update_zobrist_key(uint64_t old_key, char old_marker, char new_marker, vector<int> board_pos);
 
 };

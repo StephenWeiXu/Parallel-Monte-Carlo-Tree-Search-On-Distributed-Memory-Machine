@@ -226,14 +226,11 @@ void GomokuState::initialize_zobrist_table(){
 	}
 }
 
-uint64_t GomokuState::caculate_zobrist_key(int player_move){
+uint64_t GomokuState::caculate_zobrist_key(int player_move, vector<int> board_pos){
 	uint64_t zobrist_key = 0;
-	for (int i=0; i<num_rows; i++){
-		for (int j=0; j<num_cols; j++){
-			int marker = get_pos_marker_ind(board[i][j]);
-			zobrist_key ^= zobrist_table[i][j][marker];
-		}
-	}
+	int marker = get_pos_marker_ind(board[board_pos[0]][board_pos[1]]);
+	zobrist_key ^= zobrist_table[i][j][marker];
+
 	if (player_move == 1){
 		zobrist_key ^= play1_to_move_key;
 	}
