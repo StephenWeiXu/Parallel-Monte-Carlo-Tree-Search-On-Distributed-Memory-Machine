@@ -17,6 +17,7 @@ enum job_t {SEARCH, REPORT};
 struct Job_struct{
 	job_t type;
 	Node<GomokuState> job_node;
+	Job_struct():job_node(new Node<GomokuState>()){}
 };
 
 
@@ -82,6 +83,20 @@ int main(int argc, char** argv){
 				auto root_node = new Node<State>(root_state);
 
 				// generate child and send child to its home processor
+				int count = 0;
+				while(root_node->has_untried_moves()){
+					child_node = mcts_expand(root_node, root_state, random_engine);
+					/* send to its homeprocessor */
+					if (count < size){
+						Job_struct search_job;
+						search_job.type = SEARCH;
+						search_job.job_node = child_node;
+						int home_processor_rank = zobrist_hash(child_node);
+
+						MPI_Isend(search_job, sizeof(search_job), MPI_DATATYPE, home_processor_rank, 1, MPI_COMM_WORLD, &request);
+						continue;
+					}
+				}
 			}
 		}		
 
